@@ -38,9 +38,19 @@ locals {
 }
 
 resource "local_file" "ansible_inventory" {
-  filename = "${var.ansible_inventory_dir}/inventory.yaml"
+  filename = "${var.ansible_inventory_path}/inventory.yaml"
   content  = templatefile("${path.module}/inventory.yaml.tmpl", {
     managers = local.managers
     workers  = local.workers
   })
+}
+
+# Gets the k8s cluster kubeconfig
+data "mgc_kubernetes_cluster_kubeconfig" "prom_ring_mimir"{
+  cluster_id = mgc_kubernetes_cluster.prom_ring_mimir.id
+}
+
+resource "local_file" "prom_ring_mimir_kubeconfig" {
+  filename = "${var.k8s_kubeconfig_path}/kubeconfig.yaml"
+  content = data.mgc_kubernetes_cluster_kubeconfig.prom_ring_mimir.kubeconfig
 }

@@ -71,8 +71,12 @@ variable k8s_nodepool_replicas {
 }
 
 // Inventory file for ansible
-variable ansible_inventory_dir {
+variable ansible_inventory_path {
   type = string
   default = "../ansible"
 }
 
+variable k8s_kubeconfig_path {
+  type = string
+  default = "../k8s"
+}
