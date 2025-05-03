@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    mgc = {
+      source  = "MagaluCloud/mgc"
+      version = "0.33.0"
+    }
+  }
+}
+
 resource "mgc_kubernetes_cluster" "prom_ring_mimir" {
   name                 = "prom-ring-mimir"
   version              = var.k8s_cluster_version
