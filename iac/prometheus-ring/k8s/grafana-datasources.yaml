@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mimir-datasource
+  namespace: kube-prometheus
+  labels:
+    grafana_datasource: "true"
+data:
+  mimir-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Mimir
+        type: prometheus
+        access: proxy
+        url: http://mimir-nginx.mimir.svc.cluster.local/prometheus
+        isDefault: false
+        jsonData:
+          httpHeaderName1: X-Scope-OrgID
+        secureJsonData:
+          httpHeaderValue1: mimir-tenant
+
+      - name: Prometheus Metamonitoring
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.metamonitoring.svc.cluster.local/prometheus
+        isDefault: false
+        jsonData:
+          httpHeaderName1: X-Scope-OrgID
+        secureJsonData:
+          httpHeaderValue1: mimir-tenant

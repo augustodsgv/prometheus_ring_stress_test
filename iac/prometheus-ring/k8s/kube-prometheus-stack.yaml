@@ -1,0 +1,37 @@
+# Disabled once there will be no alerts
+alertmanager:
+  enabled: true
+
+grafana:
+  enabled: true
+  adminPassword: admin
+  service:
+    type: LoadBalancer
+
+prometheus:
+  enabled: true
+  prometheusSpec: # Tolerations for Prometheus StatefulSet are often under prometheusSpec
+  service:
+    type: LoadBalancer
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true
+  # Add tolerations for the admission webhook jobs
+  admissionWebhooks:
+    tolerations:
+    - key: "role"
+      operator: "Equal"
+      value: "metamonitoring"
+      effect: "NoSchedule"
+  # Existing tolerations for the operator pod
+  tolerations:
+  - key: "role"
+    operator: "Equal"
+    value: "metamonitoring"
+    effect: "NoSchedule"

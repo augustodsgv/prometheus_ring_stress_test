@@ -1,0 +1,34 @@
+adminUser: admin
+adminPassword: admin
+
+service:
+  enabled: true
+  type: LoadBalancer
+
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Mimir
+        type: prometheus
+        url: http://mimir-nginx.mimir.svc:80/prometheus
+        access: proxy
+        isDefault: false
+
+      - name: prometheus
+        type: prometheus
+        url: http://prometheus-server.prometheus.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+
+tolerations:
+  - key: "role"
+    operator: "Equal"
+    value: "metamonitoring"
+    effect: "NoSchedule"
