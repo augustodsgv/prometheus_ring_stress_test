@@ -1,9 +1,9 @@
 TF_DIR ?= ./terraform
 TF_AUTH_FILE ?= $(TF_DIR)/auth.sh
-KUBECONFIG ?= ./k8s/kubeconfig.yaml
-HELM_DIR ?= ./k8s
 INVENTORY_FILE ?= ./ansible/inventory.yaml
 ANSIBLE_PLAYBOOK ?= ./ansible/playbook.yaml
+export KUBECONFIG := ./k8s/kubeconfig.yaml
+K8S_DIR ?= ./k8s
 
 .PHONY: help deploy destroy terraform inventory ansible clean all
 
@@ -32,9 +32,10 @@ terraform-destroy:
 ansible:
 	@echo "Running Ansible Playbook..."
 	ansible-playbook -i $(INVENTORY_FILE) $(ANSIBLE_PLAYBOOK)
+
 # Deployments
 ## Kubernetes deployment via helm
-helm-deploy: helm-repo helm-deploy-consul helm-deploy-mimir helm-deploy-grafana
+helm-deploy: helm-repo deploy-consul deploy-mimir deploy-grafana deploy-kube-prometheus
 
 helm-repo:
 	helm repo add hashicorp https://helm.releases.hashicorp.com
@@ -42,52 +43,64 @@ helm-repo:
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	helm repo update
 
-helm-deploy-consul:
+deploy-consul:
 	@echo "Deploying consul on k8s cluster..."
-	helm upgrade --install consul -n consul hashicorp/consul -f $(HELM_DIR)/consul/values.yaml --create-namespace
+	helm upgrade --install consul -n consul hashicorp/consul -f $(K8S_DIR)/consul.yaml --create-namespace
 
-helm-deploy-mimir:
+deploy-mimir:
 	@echo "Deploying mimir on k8s cluster..."
-	helm upgrade --install mimir -n mimir grafana/mimir-distributed -f $(HELM_DIR)/mimir/values.yaml --create-namespace
+	helm upgrade --install mimir -n mimir grafana/mimir-distributed -f $(K8S_DIR)/mimir.yaml --create-namespace
+	@echo "Deploying secret file with s3 credentials"
+	kubectl apply -n mimir -f $(K8S_DIR)/mimir-s3-credentials.yaml
 
-helm-deploy-grafana:
+deploy-grafana:
 	@echo "Deploying grafana on k8s cluster..."
-	helm upgrade --install grafana -n mimir grafana/grafana -f $(HELM_DIR)/grafana/values.yaml --create-namespace
+	helm upgrade --install grafana -n grafana grafana/grafana -f $(K8S_DIR)/grafana.yaml --create-namespace
 
-helm-deploy-kube-prometheus:
-	@echo "Deploying kube-prometheus on k8s cluster..."
-	helm upgrade --install kube-prometheus -n kube-prometheus prometheus-community/kube-prometheus-stack -f $(HELM_DIR)/kube-prometheus/values.yaml --create-namespace
+deploy-prometheus:
+	@echo "Deploying prometheus on k8s cluster..."
+	helm upgrade --install prometheus -n prometheus prometheus-community/prometheus -f $(K8S_DIR)/prometheus.yaml --create-namespace
+
+deploy-kube-prometheus-stack:
+	@echo "Deploying kube-prometheus-stack on k8s cluster..."
+	helm upgrade --install kube-prometheus-stack -n kube-prometheus prometheus-community/kube-prometheus-stack -f $(K8S_DIR)/kube-prometheus-stack.yaml --create-namespace
 
 ## Deploy Prometheus Ring on docker swarm machines
-docker-deploy:
+deploy-prom-ring:
 	@echo "Deploy Prometheus Ring on Docker Swarm..."
 	@MANAGER_NODE=$$(terraform -chdir=$(TF_DIR) output -json | jq -r '.prom_ring_managers_ips.value["manager-0"].public_ip') && \
 	scp -o StrictHostKeyChecking=no compose.yaml ubuntu@$$MANAGER_NODE:/tmp/ && \
-	ssh -o StrictHostKeyChecking=no ubuntu@$$MANAGER_NODE "docker stack deploy -c /tmp/compose.yaml prometheus-ring"
-
+	ssh -o StrictHostKeyChecking=no ubuntu@$$MANAGER_NODE "docker stack deploy -c /tmp/compose.yaml prometheus-ring" && \
+	echo "Service available at $$MANAGER_NODE:9988"
+	
 # Teardown
 ## Helm charts
-helm-destroy: helm-destroy-consul helm-destroy-mimir helm-destroy-grafana
+helm-destroy: destroy-consul destroy-mimir destroy-grafana
 
-helm-destroy-consul:
+destroy-consul:
 	@echo "Deleting consul deployment on k8s cluster..."
 	helm uninstall consul -n consul
 	kubectl delete namespace consul
 
-helm-destroy-mimir:
+destroy-mimir:
 	@echo "Deleting mimir deployment on k8s cluster..."
 	helm uninstall mimir -n mimir
 	kubectl delete namespace mimir
 
-helm-destroy-grafana:
+destroy-grafana:
 	@echo "Deleting grafana deployment on k8s cluster..."
 	helm uninstall grafana -n grafana
 	kubectl delete namespace grafana
 
-helm-destroy-kube-prometheus:
+destroy-prometheus:
+	@echo "Deleting prometheus deployment on k8s cluster..."
+	# helm uninstall prometheus -n prometheus
+	kubectl delete namespace prometheus
+
+destroy-kube-prometheus:
 	@echo "Deleting kube-prometheus deployment on k8s cluster..."
-	helm uninstall kube-prometheus -n kube-prometheus
-	kubectl delete namespace kube-prometheus
+	helm uninstall kube-prometheus -n kube-prometheus-stack
+	kubectl delete namespace kube-prometheus-stack
 
 	@echo "Deleting kube-prometheus CRDs..."
 	kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
@@ -102,7 +115,7 @@ helm-destroy-kube-prometheus:
 	kubectl delete crd thanosrulers.monitoring.coreos.com
 
 ## Docker
-docker-destroy:
+destroy-prom-ring:
 	@echo "Deleting Prometheus Ring deployment on Docker Swarm cluster..."
 	@MANAGER_NODE=$$(terraform -chdir=$(TF_DIR) output -json | jq -r '.prom_ring_managers_ips.value["manager-0"].public_ip') && \
 	ssh -o StrictHostKeyChecking=no ubuntu@$$MANAGER_NODE docker stack rm prometheus-ring

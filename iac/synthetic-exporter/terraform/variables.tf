@@ -41,3 +41,8 @@ variable "manager_count" {
   default     = 3 
   description = "number of leader in the cluster"
 }
+
+variable "ansible_inventory_path" {
+  type    = string
+  default = "../ansible"
+}
