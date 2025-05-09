@@ -7,6 +7,14 @@ terraform {
   }
 }
 
+module "kubernetes" {
+  source = "./modules/kubernetes"
+}
+
+module "object_storage" {
+  source = "./modules/object_storage"
+}
+
 module "compute" {
   source = "./modules/compute"
   # mgc_api_key = var.mgc_api_key
@@ -46,9 +54,4 @@ resource "mgc_network_security_groups_attach" "prom_ring_manager" {
   count             = var.manager_count
   security_group_id = module.network.security_group
   interface_id      = module.compute.manager_network_interfaces[count.index].id
-}
-
-module "kubernetes" {
-  source = "./modules/kubernetes"
-  # mgc_api_key = var.mgc_api_key
 }
