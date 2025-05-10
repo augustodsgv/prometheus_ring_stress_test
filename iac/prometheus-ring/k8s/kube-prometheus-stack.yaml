@@ -11,6 +11,14 @@ prometheus:
       operator: "Equal"
       value: "metamonitoring"
       effect: "NoSchedule"
+    storageSpec:
+     volumeClaimTemplate:
+       spec:
+         storageClassName: "cinder-storageclass"
+         accessModes: ["ReadWriteOnce"]
+         resources:
+           requests:
+             storage: 50Gi
 
 grafana:
   enabled: true
@@ -24,6 +32,15 @@ grafana:
     url: http://mimir-nginx.mimir.svc:80/prometheus
     access: proxy
     isDefault: false
+  persistence:
+    enabled: true
+    type: sts
+    storageClassName: "cinder-storageclass"
+    accessModes:
+      - ReadWriteOnce
+    size: 20Gi
+    finalizers:
+      - kubernetes.io/pvc-protection
 
 kubeStateMetrics:
   enabled: true
@@ -38,5 +55,9 @@ prometheusOperator:
   enabled: true
   # Add tolerations for the admission webhook jobs as well
   admissionWebhooks:
-    tolerations: *metamonitoringToleration
+    enabled: true
+    deployment:
+      tolerations: *metamonitoringToleration
+    patch:
+      tolerations: *metamonitoringToleration
   tolerations: *metamonitoringToleration
