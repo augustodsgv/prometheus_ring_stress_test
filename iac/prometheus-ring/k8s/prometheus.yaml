@@ -1,6 +1,5 @@
+
 server:
-
-
   # Prometheus pods positioning on cluster
   # For now, I'm using only taints
   tolerations: 
@@ -42,6 +41,7 @@ server:
     type: ClusterIP
 
 # Configuration files
+# WARNING: this is making metrics duplicated. Fix it before it using
 serverFiles:
   prometheus.yml:
     rule_files:
@@ -103,6 +103,7 @@ serverFiles:
             regex: (.+)
             target_label: __metrics_path__
             replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+
       - job_name: 'kubernetes-service-endpoints'
         honor_labels: true
         kubernetes_sd_configs:
@@ -374,7 +375,7 @@ kube-state-metrics:
 
 # Node exporter
 prometheus-node-exporter:
-  enabled: true
+  enabled: false      # Disabling to prevent conflit with kube-prometheus-stack
 
   rbac:
     pspEnabled: false

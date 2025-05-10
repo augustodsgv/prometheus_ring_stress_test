@@ -1,37 +1,42 @@
 # Disabled once there will be no alerts
 alertmanager:
+  enabled: false
+
+prometheus:
   enabled: true
+
+  prometheusSpec: # Tolerations for Prometheus StatefulSet are often under prometheusSpec
+    tolerations: &metamonitoringToleration
+    - key: "role"
+      operator: "Equal"
+      value: "metamonitoring"
+      effect: "NoSchedule"
 
 grafana:
   enabled: true
   adminPassword: admin
   service:
     type: LoadBalancer
-
-prometheus:
-  enabled: true
-  prometheusSpec: # Tolerations for Prometheus StatefulSet are often under prometheusSpec
-  service:
-    type: LoadBalancer
+  tolerations: *metamonitoringToleration
+  additionalDataSources:
+  - name: Mimir
+    type: prometheus
+    url: http://mimir-nginx.mimir.svc:80/prometheus
+    access: proxy
+    isDefault: false
 
 kubeStateMetrics:
   enabled: true
+  tolerations: *metamonitoringToleration
 
 nodeExporter:
   enabled: true
+  tolerations: *metamonitoringToleration
+
 
 prometheusOperator:
   enabled: true
-  # Add tolerations for the admission webhook jobs
+  # Add tolerations for the admission webhook jobs as well
   admissionWebhooks:
-    tolerations:
-    - key: "role"
-      operator: "Equal"
-      value: "metamonitoring"
-      effect: "NoSchedule"
-  # Existing tolerations for the operator pod
-  tolerations:
-  - key: "role"
-    operator: "Equal"
-    value: "metamonitoring"
-    effect: "NoSchedule"
+    tolerations: *metamonitoringToleration
+  tolerations: *metamonitoringToleration
