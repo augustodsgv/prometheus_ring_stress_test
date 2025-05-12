@@ -9,6 +9,8 @@ terraform {
 
 module "kubernetes" {
   source = "./modules/kubernetes"
+  k8s_mimir_nodepool_replicas = 4
+  k8s_metamonitoring_nodepool_replicas = 1
 }
 
 module "object_storage" {
@@ -17,14 +19,13 @@ module "object_storage" {
 
 module "compute" {
   source = "./modules/compute"
-  # mgc_api_key = var.mgc_api_key
   worker_count  = var.worker_count
   manager_count = var.manager_count
+  swarm_machine_type = "BV8-32-100"
 }
 
 module "network" {
   source = "./modules/network"
-  # mgc_api_key = var.mgc_api_key
   worker_count  = var.worker_count
   manager_count = var.manager_count
 }

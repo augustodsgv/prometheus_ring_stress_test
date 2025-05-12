@@ -57,3 +57,14 @@ resource "mgc_network_security_groups_rules" "allow_prometheus_ring" {
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = mgc_network_security_groups.prom_ring_swarm.id
 }
+
+resource "mgc_network_security_groups_rules" "allow_node_expoter" {
+  provider          = mgc
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  port_range_max    = 9100
+  port_range_min    = 9100
+  protocol          = "tcp"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = mgc_network_security_groups.prom_ring_swarm.id
+}

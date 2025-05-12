@@ -12,7 +12,8 @@ variable "machine_image" {
 
 variable "swarm_machine_type" {
   type        = string
-  default     = "BV2-4-10"
+  # default     = "BV2-4-10"
+  default     = "BV4-8-20"
   description = "swarm node flavor"
 }
 

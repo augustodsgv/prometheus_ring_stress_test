@@ -11,7 +11,6 @@ variable "k8s_mimir_nodepool_flavor" {
 
 variable "k8s_mimir_nodepool_replicas" {
   type    = number
-  default = 4
 }
 
 variable "k8s_metamonitoring_nodepool_flavor" {
@@ -21,5 +20,4 @@ variable "k8s_metamonitoring_nodepool_flavor" {
 
 variable "k8s_metamonitoring_nodepool_replicas" {
   type    = number
-  default = 1
 }

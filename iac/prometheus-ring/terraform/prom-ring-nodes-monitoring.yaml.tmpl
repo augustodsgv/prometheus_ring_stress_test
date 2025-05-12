@@ -1,0 +1,21 @@
+# Template for ansible inventory to be assembled by terraform
+all:
+  vars:
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: /home/augusto/.ssh/ed25519
+    ansible_ssh_common_args: -o StrictHostKeyChecking=no
+  children:
+    managers:
+      hosts:
+%{ for name, ips in managers ~}
+        ${name}:
+          ansible_host: ${ips.public_ip}
+          private_ip: ${ips.private_ip}
+%{ endfor ~}
+    workers:
+      hosts:
+%{ for name, ips in workers ~}
+        ${name}:
+          ansible_host: ${ips.public_ip}
+          private_ip: ${ips.private_ip}
+%{ endfor ~}

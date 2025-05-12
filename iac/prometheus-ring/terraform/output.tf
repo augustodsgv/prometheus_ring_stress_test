@@ -33,7 +33,8 @@ locals {
     "worker-${idx}" => {
       public_ip  = nic.ipv4,
       private_ip = nic.local_ipv4
-    }
+    } 
+    if length(module.compute.worker_network_interfaces) > 0
   }
 }
 
