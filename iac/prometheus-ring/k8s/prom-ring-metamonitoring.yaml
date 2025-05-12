@@ -1,0 +1,78 @@
+# VMs Metamonitoring
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: prometheus-ring
+  namespace: kube-prometheus
+  labels:
+    app: prometheus-ring
+    job: prometheus-ring
+    release: kube-prometheus-stack
+subsets:
+  - addresses:
+      - ip: 177.93.133.85
+      - ip: 177.93.133.114
+      - ip: 177.93.133.115
+    ports:
+      - port: 9100
+        name: metrics
+        protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  prometheus-ring
+  namespace: kube-prometheus
+  labels:
+    app:  prometheus-ring
+    job: prometheus-ring
+    release: kube-prometheus-stack
+spec:
+  ports:
+    - name: metrics
+      port: 9100
+      protocol: TCP
+      targetPort: 9100
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prometheus-ring
+  namespace: kube-prometheus
+  labels:
+    app: prometheus-ring
+    job: prometheus-ring
+    release: kube-prometheus-stack
+spec:
+  jobLabel: job
+  selector:
+    matchLabels:
+      app: prometheus-ring
+      job: prometheus-ring
+  namespaceSelector:
+    matchNames:
+    - kube-prometheus
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    
+# ---
+# Use the service solution above, it's more reliable
+# apiVersion: monitoring.coreos.com/v1alpha1
+# kind: ScrapeConfig
+# metadata:
+#   name: prometheus-ring
+#   namespace: kube-prometheus
+#   labels:
+#     prometheus: system-monitoring-prometheus
+#     job: prometheus-ring
+#     release: kube-prometheus-stack
+# spec:
+#   staticConfigs:
+#     - labels:
+#         job: prometheus-ring
+#       targets:
+#         - 177.93.133.85:9100
+#         - 177.93.133.114:9100
+#         - 177.93.133.115:9100
