@@ -1,0 +1,18 @@
+From 2025-05-13 00:15:00
+To 2025-05-13 00:35:00
+
+reach: 3.500 targets
+8 Nodes (3 prom ring, 5 mimir)
+mimir: 6 replicas
+
+Ingester:
+  persistentVolume:
+    size: 25Gi
+  replicas: 6
+  resources:
+    limits:
+      # cpu: 2.5
+      memory: 20Gi
+    requests:
+      cpu: 1
+      memory: 10Gi
