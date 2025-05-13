@@ -3,3 +3,4 @@ terraform.*
 auth.sh
 inventory.yaml
 kubeconfig.yaml
+mimir-s3-credentials.yaml

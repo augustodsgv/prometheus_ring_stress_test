@@ -1,8 +1,8 @@
 #!/bin/bash
-EXPORTER_ADDRS=("177.93.132.199" "177.93.132.198" "177.93.132.196")
+EXPORTER_ADDRS=("172.30.0.62" "172.30.0.48" "172.30.0.102")
 
 EXPORTER_PORT=8000
-API_ADDR="177.93.132.190"
+API_ADDR="177.93.133.115"
 API_PORT="9988"
 
 register_target(){
@@ -29,7 +29,8 @@ set_test_targets(){
     done
 }
 
-replica_counts=(3 100 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000)
+# replica_counts=(2000 3000 3500 4000 5000 5500 6000 6500 7000 8000 9000 10000)
+replica_counts=(3 8000 8500 9000 9500 10000 10500 11000 11500 12000 12500 13000 13500 14000 14500 15000 15500 16000)
 last_test=0
 for replica_count in "${replica_counts[@]}"; do
   echo "Running test with $replica_count replicas"
