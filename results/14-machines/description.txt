@@ -1,18 +1,18 @@
-From ???
-To ???
+From 2025-05-13 09:40:00
+To 2025-05-13 10:25:00
 
-reached: 8000 targets
-12 Nodes (3 prom ring, 9 mimir)
+reach: 10000 targets
+10 Nodes (3 prom ring, 7 mimir)
 mimir: 18 replicas
 
 Ingester:
   persistentVolume:
     size: 25Gi
-  replicas: 15
+  replicas: 18
   resources:
     limits:
       # cpu: 2.5
       memory: 20Gi
     requests:
       cpu: 1
-      memory: 10Gi
+      memory: 12Gi
