@@ -1,78 +1,48 @@
-# VMs Metamonitoring
-apiVersion: v1
-kind: Endpoints
+# VMs
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
 metadata:
-  name: prometheus-ring
+  name: prometheus-ring-machines
   namespace: kube-prometheus
   labels:
-    app: prometheus-ring
-    job: prometheus-ring
-    release: kube-prometheus-stack
-subsets:
-  - addresses:
-      - ip: 177.93.133.85
-      - ip: 177.93.133.114
-      - ip: 177.93.133.115
-    ports:
-      - port: 9100
-        name: metrics
-        protocol: TCP
----
-apiVersion: v1
-kind: Service
-metadata:
-  name:  prometheus-ring
-  namespace: kube-prometheus
-  labels:
-    app:  prometheus-ring
+    prometheus: system-monitoring-prometheus
     job: prometheus-ring
     release: kube-prometheus-stack
 spec:
-  ports:
-    - name: metrics
-      port: 9100
-      protocol: TCP
-      targetPort: 9100
+  staticConfigs:
+    - labels:
+        job: prometheus-ring
+      targets:
+          # Virtual Machines
+        - 177.93.133.85:9100
+        - 177.93.133.114:9100
+        - 177.93.133.115:9100
 ---
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+# Prometheus Ring
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
 metadata:
-  name: prometheus-ring
+  name: prometheus-ring-instances
   namespace: kube-prometheus
   labels:
-    app: prometheus-ring
-    job: prometheus-ring
+    prometheus: system-monitoring-prometheus
+    job: prometheus-ring-instances
     release: kube-prometheus-stack
 spec:
-  jobLabel: job
-  selector:
-    matchLabels:
-      app: prometheus-ring
-      job: prometheus-ring
-  namespaceSelector:
-    matchNames:
-    - kube-prometheus
-  endpoints:
-  - port: metrics
-    interval: 30s
-    path: /metrics
-    
-# ---
-# Use the service solution above, it's more reliable
-# apiVersion: monitoring.coreos.com/v1alpha1
-# kind: ScrapeConfig
-# metadata:
-#   name: prometheus-ring
-#   namespace: kube-prometheus
-#   labels:
-#     prometheus: system-monitoring-prometheus
-#     job: prometheus-ring
-#     release: kube-prometheus-stack
-# spec:
-#   staticConfigs:
-#     - labels:
-#         job: prometheus-ring
-#       targets:
-#         - 177.93.133.85:9100
-#         - 177.93.133.114:9100
-#         - 177.93.133.115:9100
+  staticConfigs:
+    - labels:
+        job: prometheus-ring
+        service: prometheus-ring
+      targets:
+        # Prometheus Ring Nodes
+        - 177.93.133.115:19090
+        - 177.93.133.115:19091
+        - 177.93.133.115:19092
+        - 177.93.133.115:19093
+        - 177.93.133.115:19094
+        - 177.93.133.115:19095
+        - 177.93.133.115:19096
+        - 177.93.133.115:19097
+        - 177.93.133.115:19098
+        - 177.93.133.115:19099
+        - 177.93.133.115:19100

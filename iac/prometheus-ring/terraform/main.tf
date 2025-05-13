@@ -9,7 +9,7 @@ terraform {
 
 module "kubernetes" {
   source = "./modules/kubernetes"
-  k8s_mimir_nodepool_replicas = 4
+  k8s_mimir_nodepool_replicas = 0
   k8s_metamonitoring_nodepool_replicas = 1
 }
 

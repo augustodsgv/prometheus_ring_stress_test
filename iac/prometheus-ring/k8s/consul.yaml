@@ -5,23 +5,23 @@ global:
   logLevel: debug
 
 server:
-  replicas: 5
+  replicas: 1
   extraConfig: |
     {
       "limits": {
         "http_max_conns_per_client": 100000
       }
     }
-  exposeService:
-    enabled: true
-    type: LoadBalancer
+  # exposeService:
+  #   enabled: true
+  #   type: LoadBalancer
   resources:
-    requests:
-      memory: "200Mi"
-      cpu: "100m"
     limits:
       memory: "2Gi"
       cpu: "1"
+    requests:
+      memory: "200Mi"
+      cpu: "100m"
 
   tolerations: |
     - key: "role"

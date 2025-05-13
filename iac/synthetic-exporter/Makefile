@@ -9,7 +9,7 @@ ANSIBLE_PLAYBOOK ?= ./ansible/playbook.yaml
 
 help:
 	@echo "Usage: make [deploy|destroy|terraform|inventory|ansible|clean|all]"
-	@echo "  deploy        - Deploy prometheus ring on docker swarm and mimir on k8s"
+	@echo "  deploy        - Deploy prometheus ring on docker swarm"
 	@echo "  destroy       - Remove running services"
 	@echo "  terraform     - Run Terraform initialization and apply"
 	@echo "  inventory     - Generate Ansible inventory from Terraform output"

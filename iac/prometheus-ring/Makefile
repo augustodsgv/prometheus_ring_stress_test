@@ -22,6 +22,11 @@ terraform:
 	@echo Building terraform infraestructure...
 	terraform -chdir=$(TF_DIR) apply
 
+# Infraestructure setup
+terraform-plan:
+	@echo Planning terraform infraestructure...
+	terraform -chdir=$(TF_DIR) plan
+
 inventory:
 	@echo Building ansible inventory...
 	terraform -chdir=$(TF_DIR) output -json | ./build-inventory $(INVENTORY_FILE)
@@ -62,8 +67,14 @@ deploy-prometheus:
 	helm upgrade --install prometheus -n prometheus prometheus-community/prometheus -f $(K8S_DIR)/prometheus.yaml --create-namespace
 
 deploy-kube-prometheus-stack:
-	@echo "Deploying kube-prometheus-stack on k8s cluster..."
-	helm upgrade --install kube-prometheus-stack -n kube-prometheus prometheus-community/kube-prometheus-stack -f $(K8S_DIR)/kube-prometheus-stack.yaml --create-namespace
+# @echo "Deploying kube-prometheus-stack on k8s cluster..."
+# helm upgrade --install kube-prometheus-stack -n kube-prometheus prometheus-community/kube-prometheus-stack -f $(K8S_DIR)/kube-prometheus-stack.yaml --create-namespace
+	@echo "Deploying Prometheus Ring metamonitoring endpoints"
+	kubectl apply -n kube-prometheus -f $(K8S_DIR)/prom-ring-metamonitoring.yaml
+
+deploy-netshoot:
+	@echo "Deploying netshoot pod"
+	kubectl apply -n kube-prometheus -f $(K8S_DIR)/debug-pod.yaml
 
 ## Deploy Prometheus Ring on docker swarm machines
 deploy-prom-ring:
@@ -97,25 +108,33 @@ destroy-prometheus:
 	# helm uninstall prometheus -n prometheus
 	kubectl delete namespace prometheus
 
-destroy-kube-prometheus:
-	@echo "Deleting kube-prometheus deployment on k8s cluster..."
-	helm uninstall kube-prometheus -n kube-prometheus-stack
-	kubectl delete namespace kube-prometheus-stack
+destroy-kube-prometheus-stack:
+	@echo "Destroying Prometheus Ring metamonitoring endpoints"
+	kubectl delete -n kube-prometheus -f $(K8S_DIR)/prom-ring-metamonitoring.yaml
+# 	@echo "Deleting kube-prometheus deployment on k8s cluster..."
+# 	helm uninstall kube-prometheus -n kube-prometheus-stack
+# 	kubectl delete namespace kube-prometheus-stack
 
-	@echo "Deleting kube-prometheus CRDs..."
-	kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
-	kubectl delete crd alertmanagers.monitoring.coreos.com
-	kubectl delete crd podmonitors.monitoring.coreos.com
-	kubectl delete crd probes.monitoring.coreos.com
-	kubectl delete crd prometheusagents.monitoring.coreos.com
-	kubectl delete crd prometheuses.monitoring.coreos.com
-	kubectl delete crd prometheusrules.monitoring.coreos.com
-	kubectl delete crd scrapeconfigs.monitoring.coreos.com
-	kubectl delete crd servicemonitors.monitoring.coreos.com
-	kubectl delete crd thanosrulers.monitoring.coreos.com
+# 	@echo "Deleting kube-prometheus CRDs..."
+# 	kubectl delete crd alertmanagerconfigs.monitoring.coreos.com
+# 	kubectl delete crd alertmanagers.monitoring.coreos.com
+# 	kubectl delete crd podmonitors.monitoring.coreos.com
+# 	kubectl delete crd probes.monitoring.coreos.com
+# 	kubectl delete crd prometheusagents.monitoring.coreos.com
+# 	kubectl delete crd prometheuses.monitoring.coreos.com
+# 	kubectl delete crd prometheusrules.monitoring.coreos.com
+# 	kubectl delete crd scrapeconfigs.monitoring.coreos.com
+# 	kubectl delete crd servicemonitors.monitoring.coreos.com
+# 	kubectl delete crd thanosrulers.monitoring.coreos.com
 
 ## Docker
 destroy-prom-ring:
 	@echo "Deleting Prometheus Ring deployment on Docker Swarm cluster..."
-	@MANAGER_NODE=$$(terraform -chdir=$(TF_DIR) output -json | jq -r '.prom_ring_managers_ips.value["manager-0"].public_ip') && \
-	ssh -o StrictHostKeyChecking=no ubuntu@$$MANAGER_NODE docker stack rm prometheus-ring
+	@bash -c '\
+		MANAGER_NODE=$$(terraform -chdir=$(TF_DIR) output -json | jq -r ".prom_ring_managers_ips.value[\"manager-0\"].public_ip"); \
+		ssh -o StrictHostKeyChecking=no ubuntu@$$MANAGER_NODE "\
+			docker service ls | grep prometheus | awk '\''{ print \$$2 }'\'' | while read -r service; do \
+				docker service rm \$$service; \
+			done && \
+			docker stack rm prometheus-ring" \
+	'

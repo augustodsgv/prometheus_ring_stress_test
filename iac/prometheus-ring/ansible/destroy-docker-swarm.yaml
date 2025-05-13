@@ -1,0 +1,16 @@
+---
+- hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Leave nodes forcefully
+      shell: 'docker swarm leave --force'
+      ignore_errors: true
+
+    - name: Reset docker daemon
+      service:
+        name: docker
+        state: reloaded
+
+    - name: Reboot nodes
+      ansible.builtin.reboot:

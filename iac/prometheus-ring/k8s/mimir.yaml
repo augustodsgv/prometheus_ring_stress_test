@@ -33,11 +33,12 @@ mimir:
     distributor:
       # Configures consul as a kv store to mimir deduplication feature
       ha_tracker:
-        enable_ha_tracker: false
+        enable_ha_tracker: true
         kvstore:
           store: consul
           consul:
             host: http://consul-server.consul.svc.cluster.local:8500
+    
 
     # Mimir has relativelly low limits compared to the stress tests made here.
     # This ensures that it works on maximum capacity
@@ -47,9 +48,11 @@ mimir:
       max_global_series_per_metric: 0
       max_fetched_chunks_per_query: 0
       accept_ha_samples: true
-      ingestion_rate: 100000000
+      # ingestion_rate: 100000000
+      ingestion_rate: 10000000                    # Tenant ingestion limit  
       ingestion_burst_size: 2000000               # Default value
-      ingestion_burst_factor: 1000                # Multiplier of the default ingestion_burst_size, i.e. 1000 * 200000 = 200000000
+      ingestion_burst_factor: 10                  # Multiplier of the default ingestion_burst_size, i.e. 1000 * 200000 = 200000000
+      # ingestion_burst_factor: 1000                # Multiplier of the default ingestion_burst_size, i.e. 1000 * 200000 = 200000000
       max_exemplars_per_series_per_request: 0     # Remove limits of queries
       
       # Defines label to be used in the deduplication feature
@@ -66,16 +69,26 @@ metaMonitoring:
 
 # Ingester
 ingester:
+  # persistentVolume:
+  #   size: 50Gi
+  # replicas: 3
+  # resources:
+  #   limits:
+  #     # cpu: 2.5
+  #     memory: 30Gi
+  #   requests:
+  #     cpu: 2
+  #     memory: 20Gi
   persistentVolume:
-    size: 50Gi
-  replicas: 3
+    size: 25Gi
+  replicas: 18
   resources:
     limits:
       # cpu: 2.5
-      memory: 12Gi
+      memory: 20Gi
     requests:
-      cpu: 1.0
-      memory: 6Gi
+      cpu: 1
+      memory: 12Gi
   topologySpreadConstraints: {}
   affinity: &spreadReplicasAcrossNodes
     podAntiAffinity:
@@ -102,6 +115,10 @@ ingester:
       operator: "Equal"
       value: "mimir"
       effect: "NoSchedule"
+    - key: "mimir-role"
+      operator: "Equal"
+      value: "ingester"
+      effect: "NoSchedule"
 
 # Store Gateway
 store_gateway:
@@ -119,7 +136,11 @@ store_gateway:
   affinity: *spreadReplicasAcrossNodes
   zoneAwareReplication:
     topologyKey: 'kubernetes.io/hostname'
-  tolerations: *mimirToleration
+  tolerations:  &mimirToleration
+    - key: "role"
+      operator: "Equal"
+      value: "mimir"
+      effect: "NoSchedule"
 
 # Compactor
 compactor:
@@ -127,7 +148,7 @@ compactor:
     size: 20Gi
   resources:
     limits:
-      cpu: 1
+      cpu: 4
       memory: 2.1Gi
     requests:
       cpu: 1
@@ -143,18 +164,18 @@ distributor:
       memory: 5.7Gi
     requests:
       cpu: 2
-      memory: 2.4Gi
+      memory: 4Gi
   tolerations: *mimirToleration
 
 querier:
-  replicas: 1
+  replicas: 1  # subject to change
   resources:
     limits:
-      cpu: 2.8
+      # cpu: 2.8
       memory: 5.6Gi
     requests:
       cpu: 1
-      memory: 2.4Gi
+      memory: 2Gi
   tolerations: *mimirToleration
 
 query_frontend:
@@ -164,8 +185,8 @@ query_frontend:
       # cpu: 2.8
       memory: 2.8Gi
     requests:
-      cpu: 1
-      memory: 1.4Gi
+      cpu: 0.5
+      memory: 1Gi
   tolerations: *mimirToleration
 
 nginx:
@@ -175,7 +196,7 @@ nginx:
       # cpu: 1.4
       memory: 1Gi
     requests:
-      cpu: 1
+      cpu: 0.5
       memory: 500Mi
   tolerations: *mimirToleration
 
@@ -213,7 +234,6 @@ metadata-cache:
 results-cache:
   enabled: true
   tolerations: *mimirToleration
-
 
 # Disables Minio to use the provider s3
 minio:

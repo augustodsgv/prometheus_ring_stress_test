@@ -38,6 +38,6 @@ variable "worker_count" {
 
 variable "manager_count" {
   type        = number
-  default     = 3
+  default     = 0
   description = "number of leader in the cluster"
 }

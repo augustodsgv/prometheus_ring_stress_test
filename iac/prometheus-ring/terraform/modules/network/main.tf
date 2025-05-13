@@ -40,8 +40,8 @@ resource "mgc_network_security_groups_rules" "allow_ssh_swarm" {
   provider          = mgc
   direction         = "ingress"
   ethertype         = "IPv4"
-  port_range_max    = 22
   port_range_min    = 22
+  port_range_max    = 22
   protocol          = "tcp"
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = mgc_network_security_groups.prom_ring_swarm.id
@@ -51,19 +51,30 @@ resource "mgc_network_security_groups_rules" "allow_prometheus_ring" {
   provider          = mgc
   direction         = "ingress"
   ethertype         = "IPv4"
-  port_range_max    = 9988
   port_range_min    = 9988
+  port_range_max    = 9988
   protocol          = "tcp"
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = mgc_network_security_groups.prom_ring_swarm.id
 }
 
-resource "mgc_network_security_groups_rules" "allow_node_expoter" {
+resource "mgc_network_security_groups_rules" "allow_prometheus_ring_metrics" {
   provider          = mgc
   direction         = "ingress"
   ethertype         = "IPv4"
-  port_range_max    = 9100
+  port_range_min    = 19090
+  port_range_max    = 20090
+  protocol          = "tcp"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = mgc_network_security_groups.prom_ring_swarm.id
+}
+
+resource "mgc_network_security_groups_rules" "allow_node_exporter" {
+  provider          = mgc
+  direction         = "ingress"
+  ethertype         = "IPv4"
   port_range_min    = 9100
+  port_range_max    = 9100
   protocol          = "tcp"
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = mgc_network_security_groups.prom_ring_swarm.id
